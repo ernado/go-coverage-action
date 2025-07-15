@@ -29,6 +29,10 @@ inputs:
     description: 'Package names to test, passed to go test - Multiple arguments should be separated by newlines'
     default: './...'
     required: false
+  json-output:
+    description: 'File or pathname to write JSON test output to. Will add -json flag to go test and pipe output to this file'
+    required: false
+    default: ''
   coverage-threshold:
     description: 'Fail the build if the coverage drops below supplied percentage'
     required: false

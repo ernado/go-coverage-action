@@ -33871,6 +33871,7 @@ const { execa } = __nccwpck_require__(4460);
 const fs = __nccwpck_require__(7147);
 const path = __nccwpck_require__(1017);
 const readline = __nccwpck_require__(4521);
+const { PassThrough } = __nccwpck_require__(2781);
 
 const { version } = __nccwpck_require__(4147);
 
@@ -33879,7 +33880,7 @@ const ctx = github.context;
 
 const DATA_FMT_VERSION = 1;
 
-async function exec(cmd, args, stdin) {
+async function exec(cmd, args, stdin, stdout) {
   try {
     const wd = core.getInput('working-directory');
     core.startGroup(`$ ${cmd} ${args.join(' ')}`);
@@ -33895,11 +33896,17 @@ async function exec(cmd, args, stdin) {
       all: true,
       input: stdin,
     });
-    subprocess.all.pipe(process.stdout);
+    
+    if (stdout) {
+      subprocess.all.pipe(stdout);
+    } else {
+      subprocess.all.pipe(process.stdout);
+    }
+    
     const { all } = await subprocess;
     return { output: all };
   } catch (e) {
-    core.warning(`Failed to run ${cmd} ${args.join(' ')}`);
+    core.warning(`Failed to run ${cmd} ${args.join(' ')}`);k
     throw e;
   } finally {
     core.endGroup();
@@ -34018,7 +34025,8 @@ async function generateCoverage() {
 
   const coverMode = core.getInput('cover-mode');
   const coverPkg = core.getInput('cover-pkg');
-  const testPkgs = core.getInput('test-pkgs')
+  const testPkgs = core.getInput('test-pkgs');
+  const jsonOutput = core.getInput('json-output');
 
   let testArgs;
   try {
@@ -34038,9 +34046,25 @@ async function generateCoverage() {
       '-coverprofile',
       report.gocovPathname,
       ...(coverPkg ? ['-coverpkg', coverPkg] : []),
+      ...(jsonOutput ? ['-json'] : []),
       ...testPkgs.split('\n'),
     ]);
-  await exec('go', args);
+  
+  // If json-output is specified, pipe the go test output to both file and stdout
+  let stdout = null;
+  if (jsonOutput) {
+    const outputPath = jsonOutput.startsWith('/') 
+      ? jsonOutput 
+      : path.join(tmpdir, jsonOutput);
+    const fileStream = fs.createWriteStream(outputPath);
+    
+    // Create a PassThrough stream that writes to both file and stdout.
+    stdout = new PassThrough();
+    stdout.pipe(fileStream);
+    stdout.pipe(process.stdout);
+  }
+  
+  await exec('go', args, null, stdout);
 
   const pkgStats = {};
   const [globalPct, skippedFileCount, pkgStmts] = await calcCoverage(
