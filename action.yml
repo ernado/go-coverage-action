@@ -29,7 +29,7 @@ inputs:
     description: 'Package names to test, passed to go test - Multiple arguments should be separated by newlines'
     default: './...'
     required: false
-  output-to-json:
+  json-output:
     description: 'File or pathname to write JSON test output to. Will add -json flag to go test and pipe output to this file'
     required: false
     default: ''

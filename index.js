@@ -6,6 +6,7 @@ const { execa } = require('execa');
 const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
+const { PassThrough } = require('stream');
 
 const { version } = require('./package.json');
 
@@ -160,7 +161,7 @@ async function generateCoverage() {
   const coverMode = core.getInput('cover-mode');
   const coverPkg = core.getInput('cover-pkg');
   const testPkgs = core.getInput('test-pkgs');
-  const outputToJSON = core.getInput('output-to-json');
+  const jsonOutput = core.getInput('json-output');
 
   let testArgs;
   try {
@@ -180,17 +181,22 @@ async function generateCoverage() {
       '-coverprofile',
       report.gocovPathname,
       ...(coverPkg ? ['-coverpkg', coverPkg] : []),
-      ...(outputToJSON ? ['-json'] : []),
+      ...(jsonOutput ? ['-json'] : []),
       ...testPkgs.split('\n'),
     ]);
   
-  // If output-to-json is specified, pipe the go test output to that file
+  // If json-output is specified, pipe the go test output to both file and stdout
   let stdout = null;
-  if (outputToJSON) {
-    const outputPath = outputToJSON.startsWith('/') 
-      ? outputToJSON 
-      : path.join(tmpdir, outputToJSON);
-    stdout = fs.createWriteStream(outputPath);
+  if (jsonOutput) {
+    const outputPath = jsonOutput.startsWith('/') 
+      ? jsonOutput 
+      : path.join(tmpdir, jsonOutput);
+    const fileStream = fs.createWriteStream(outputPath);
+    
+    // Create a PassThrough stream that writes to both file and stdout.
+    stdout = new PassThrough();
+    stdout.pipe(fileStream);
+    stdout.pipe(process.stdout);
   }
   
   await exec('go', args, null, stdout);
