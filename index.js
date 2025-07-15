@@ -172,10 +172,6 @@ async function generateCoverage() {
     throw `invalid value for test-args; must be a JSON array of strings, got ${testArgs} (${e})`;
   }
 
-  if (outputToJSON) {
-    testArgs.push('-json');
-  }
-
   const args = ['test']
     .concat(testArgs)
     .concat([
@@ -184,6 +180,7 @@ async function generateCoverage() {
       '-coverprofile',
       report.gocovPathname,
       ...(coverPkg ? ['-coverpkg', coverPkg] : []),
+      ...(outputToJSON ? ['-json'] : []),
       ...testPkgs.split('\n'),
     ]);
   
