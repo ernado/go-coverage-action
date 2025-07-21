@@ -160,7 +160,7 @@ async function generateCoverage() {
   const coverMode = core.getInput('cover-mode');
   const coverPkg = core.getInput('cover-pkg');
   const testPkgs = core.getInput('test-pkgs');
-  const jsonOutput = core.getInput('json-output');
+  const outputFilename = core.getInput('output-filename');
 
   let testArgs;
   try {
@@ -180,16 +180,15 @@ async function generateCoverage() {
       '-coverprofile',
       report.gocovPathname,
       ...(coverPkg ? ['-coverpkg', coverPkg] : []),
-      ...(jsonOutput ? ['-json'] : []),
       ...testPkgs.split('\n'),
     ]);
   
-  // if json-output is specified, pipe the go test output to both file and stdout.
+  // if output-filename is specified, pipe the go test output to both file and stdout
   let stdout = null;
-  if (jsonOutput) {
-    const outputPath = jsonOutput.startsWith('/') 
-      ? jsonOutput 
-      : path.join(tmpdir, jsonOutput);
+  if (outputFilename) {
+    const outputPath = outputFilename.startsWith('/') 
+      ? outputFilename 
+      : path.join(tmpdir, outputFilename);
     const fileStream = fs.createWriteStream(outputPath);
 
     stdout = new PassThrough();
