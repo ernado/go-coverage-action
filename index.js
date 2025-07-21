@@ -32,11 +32,10 @@ async function exec(cmd, args, stdin, stdout) {
       input: stdin,
     });
     
-    if (stdout) {
-      subprocess.all.pipe(stdout);
-    } else {
-      subprocess.all.pipe(process.stdout);
+    if (!stdout) {
+      stdout = process.stdout;
     }
+    subprocess.all.pipe(stdout);
     
     const { all } = await subprocess;
     return { output: all };
