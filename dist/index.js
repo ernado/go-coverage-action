@@ -33897,16 +33897,15 @@ async function exec(cmd, args, stdin, stdout) {
       input: stdin,
     });
     
-    if (stdout) {
-      subprocess.all.pipe(stdout);
-    } else {
-      subprocess.all.pipe(process.stdout);
+    if (!stdout) {
+      stdout = process.stdout;
     }
+    subprocess.all.pipe(stdout);
     
     const { all } = await subprocess;
     return { output: all };
   } catch (e) {
-    core.warning(`Failed to run ${cmd} ${args.join(' ')}`);k
+    core.warning(`Failed to run ${cmd} ${args.join(' ')}`);
     throw e;
   } finally {
     core.endGroup();
@@ -34026,7 +34025,7 @@ async function generateCoverage() {
   const coverMode = core.getInput('cover-mode');
   const coverPkg = core.getInput('cover-pkg');
   const testPkgs = core.getInput('test-pkgs');
-  const jsonOutput = core.getInput('json-output');
+  const outputFilename = core.getInput('output-filename');
 
   let testArgs;
   try {
@@ -34046,19 +34045,17 @@ async function generateCoverage() {
       '-coverprofile',
       report.gocovPathname,
       ...(coverPkg ? ['-coverpkg', coverPkg] : []),
-      ...(jsonOutput ? ['-json'] : []),
       ...testPkgs.split('\n'),
     ]);
   
-  // If json-output is specified, pipe the go test output to both file and stdout
+  // if output-filename is specified, pipe the go test output to both file and stdout
   let stdout = null;
-  if (jsonOutput) {
-    const outputPath = jsonOutput.startsWith('/') 
-      ? jsonOutput 
-      : path.join(tmpdir, jsonOutput);
+  if (outputFilename) {
+    const outputPath = outputFilename.startsWith('/') 
+      ? outputFilename 
+      : path.join(tmpdir, outputFilename);
     const fileStream = fs.createWriteStream(outputPath);
-    
-    // Create a PassThrough stream that writes to both file and stdout.
+
     stdout = new PassThrough();
     stdout.pipe(fileStream);
     stdout.pipe(process.stdout);
