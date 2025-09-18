@@ -33900,7 +33900,7 @@ async function exec(cmd, args, stdin, stdout) {
     if (!stdout) {
       stdout = process.stdout;
     }
-    subprocess.all.pipe(stdout);
+    subprocess.stdout.pipe(stdout);
     
     const { all } = await subprocess;
     return { output: all };
