@@ -36,6 +36,7 @@ async function exec(cmd, args, stdin, stdout) {
       stdout = process.stdout;
     }
     subprocess.stdout.pipe(stdout);
+    subprocess.stderr.pipe(process.stderr);
     
     const { all } = await subprocess;
     return { output: all };
