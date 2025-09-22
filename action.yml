@@ -29,6 +29,10 @@ inputs:
     description: 'Package names to test, passed to go test - Multiple arguments should be separated by newlines'
     default: './...'
     required: false
+  output-filename:
+    description: 'File or pathname to write go test output to. Output will be piped to both this file and stdout'
+    required: false
+    default: ''
   coverage-threshold:
     description: 'Fail the build if the coverage drops below supplied percentage'
     required: false
